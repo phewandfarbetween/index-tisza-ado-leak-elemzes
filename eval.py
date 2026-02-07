@@ -157,6 +157,38 @@ def http_request(method: str,
     conn.close()
     return b"".join(chunks)
 
+def eval_scores(key, scores, scores_np, human_key, llm_key):
+    print(f"## {key}")
+    print()
+    print(f"  Mann-Whitney-próba")
+    u1, p1 = mannwhitneyu(scores_np[key].mean(axis=1), scores_np[human_key].mean(axis=1), alternative="two-sided")
+    print(f"    {key} vs {human_key}: p-value = {p1:.9f}")
+    u2, p2 = mannwhitneyu(scores_np[key].mean(axis=1), scores_np[llm_key].mean(axis=1), alternative="two-sided")
+    print(f"    {key} vs {llm_key}:   p-value = {p2:.9f}")
+    alpha = 0.05 / 2
+    if p1 > alpha and p2 < alpha:
+        print(f"    A {key} minta megkülönböztethetetlen a {human_key} mintától és különbözik az {llm_key} mintától.")
+    elif p1 < alpha and p2 > alpha:
+        print(f"    A {key} minta megkülönböztethetetlen az {llm_key} mintától és különbözik a {human_key} mintától.")
+    elif p1 < alpha and p2 < alpha:
+        print(f"    A {key} minta mindkét mintától eltér.")
+    else:
+        print("    Inkonklúzív.")
+    print()
+    print("  LogisticRegression")
+    X_train = numpy.vstack([scores_np[human_key], scores_np[llm_key]])
+    y_train = numpy.array([0] * len(scores[human_key]) + [1] * len(scores[llm_key]))
+    model = LogisticRegression()
+    if IS_DEBUGGING:
+        cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring="accuracy")
+        print(f"    CV accuracy: {cv_scores.mean():.3f}  (std: {cv_scores.std():.3f})")
+    model.fit(X_train, y_train)
+    y_prob = model.predict_proba(scores_np[key])
+    y_prob_llm = y_prob[:, 1]
+    print(f"    {key} átlagos LLM valószínűség: {y_prob_llm.mean() * 100:.3f}%  (std: {y_prob_llm.std():.3f})")
+    print(f"    {key} medián LLM valószínűség:  {numpy.median(y_prob_llm) * 100:.3f}%")
+    print()
+
 if __name__ == '__main__':
     models = [
         ("anthropic", "claude-sonnet-4-5-20250929", 0.1),
@@ -204,6 +236,8 @@ Következik az elemzendő szövegrészlet:
         "llm": "llm-samples.txt",
         "llmocr": "llm-samples-ocr.txt",
         "leakocr": "leak-samples-ocr.txt",
+        "tisza": "tisza-samples.txt",
+        "tiszaocr": "tisza-samples-ocr.txt",
     }
     argv = [arg for arg in sys.argv if arg != "--debug"]
     api_selection = None if len(argv) < 2 else argv[1]
@@ -242,54 +276,16 @@ Következik az elemzendő szövegrészlet:
                 debug("")
                 debug(response)
                 debug("")
-
     scores_np = {key: numpy.array(arr) for key, arr in scores.items()}
-
     print()
     print("Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)")
+    print()
     for experiment, exp_scores in scores_np.items():
         print(f"  {files[experiment] + ':':25} {exp_scores.flatten().mean():.3f}  (std: {exp_scores.flatten().std():.3f})")
-
     print()
-    print("Mann-Whitney-próba")
-    u1, p1 = mannwhitneyu(scores_np["leakocr"].mean(axis=1), scores_np["humanocr"].mean(axis=1), alternative="two-sided")
-    print(f"  leakocr vs humanocr: p-value = {p1:.9f}")
-    u2, p2 = mannwhitneyu(scores_np["leakocr"].mean(axis=1), scores_np["llmocr"].mean(axis=1), alternative="two-sided")
-    print(f"  leakocr vs llmocr:   p-value = {p2:.9f}")
-    alpha = 0.05
-    if p1 > alpha and p2 < alpha:
-        print("  A leakocr minta megkülönböztethetetlen a humanocr mintától és különbözik az llmocr mintától.")
-    elif p1 < alpha and p2 > alpha:
-        print("  A leakocr minta megkülönböztethetetlen az llmocr mintától és különbözik a humanocr mintától.")
-    elif p1 < alpha and p2 < alpha:
-        print("  A leakocr minta mindkét mintától eltér.")
-    else:
-        print("  Inkonklúzív.")
-
-    print()
-    print("LogisticRegression")
-    X_train = numpy.vstack([
-        scores_np["human"],
-        scores_np["humanocr"],
-        scores_np["llm"],
-        scores_np["llmocr"],
-    ])
-    y_train = numpy.array(
-        [0] * len(scores["human"])
-        + [0] * len(scores["humanocr"])
-        + [1] * len(scores["llm"])
-        + [1] * len(scores["llmocr"])
-    )
-    model = LogisticRegression()
-    if IS_DEBUGGING:
-        cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring="accuracy")
-        print(f"  CV accuracy: {cv_scores.mean():.3f}  (std: {cv_scores.std():.3f})")
-    model.fit(X_train, y_train)
-    y_prob = model.predict_proba(scores_np["leakocr"])
-    y_prob_llm = y_prob[:, 1]
-    print(f"  leak-samples-ocr.txt átlagos LLM valószínűség: {y_prob_llm.mean():.3f}  (std: {y_prob_llm.std():.3f})")
-    print(f"  leak-samples-ocr.txt medián LLM valószínűség:  {numpy.median(y_prob_llm):.3f}")
-
+    eval_scores("leakocr", scores, scores_np, "humanocr", "llmocr")
+    eval_scores("tisza", scores, scores_np, "human", "llm")
+    eval_scores("tiszaocr", scores, scores_np, "humanocr", "llmocr")
     labels = [key for key in scores.keys()]
     plt.boxplot(
         [scores_np[label].mean(axis=1) for label in labels],

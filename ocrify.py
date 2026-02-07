@@ -29,4 +29,4 @@ for line in sys.stdin.readlines():
         elif char in "ÚÜŰ" and random.random() < 0.5:
             char = "U"
         ocrified += char
-    print(ocrified)
+    print(ocrified, end="")
