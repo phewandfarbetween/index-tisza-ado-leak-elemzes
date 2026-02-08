@@ -1,4 +1,4 @@
-# Az állítólagos adótervezet szerzőségének elemzése
+# Az állítólagos adótervezet és a hivatalos program szerzőségének elemzése
 
 ## TL;DR
 
