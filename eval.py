@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from scipy.stats import mannwhitneyu
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import cross_val_score
 
 API_KEYS = {
@@ -188,6 +189,7 @@ def eval_scores(key, scores, scores_np, human_key, llm_key):
     print(f"    {key} átlagos LLM valószínűség: {y_prob_llm.mean() * 100:.3f}%  (std: {y_prob_llm.std():.3f})")
     print(f"    {key} medián LLM valószínűség:  {numpy.median(y_prob_llm) * 100:.3f}%")
     print()
+    return model
 
 if __name__ == '__main__':
     models = [
@@ -239,6 +241,7 @@ Következik az elemzendő szövegrészlet:
         "tisza": "tisza-samples.txt",
         "tiszaocr": "tisza-samples-ocr.txt",
         "kukaac": "kukaac-samples.txt",
+        "reddithuman": "reddit-samples.txt",
     }
     argv = [arg for arg in sys.argv if arg != "--debug"]
     api_selection = None if len(argv) < 2 else argv[1]
@@ -288,10 +291,27 @@ Következik az elemzendő szövegrészlet:
     eval_scores("tisza", scores, scores_np, "human", "llm")
     eval_scores("tiszaocr", scores, scores_np, "humanocr", "llmocr")
     eval_scores("kukaac", scores, scores_np, "human", "llm")
+    model = eval_scores("reddithuman", scores, scores_np, "human", "llm")
+    y_pred_kukaac = model.predict(scores_np["kukaac"])
+    y_pred_reddithuman = model.predict(scores_np["reddithuman"])
+    y_pred = numpy.concatenate([y_pred_kukaac, y_pred_reddithuman])
+    y_true = numpy.concatenate([numpy.ones(y_pred_kukaac.shape), numpy.zeros(y_pred_reddithuman.shape)])
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    print()
+    print(f"LogisticRegression (human, llm) metrikák:")
+    print()
+    print(f"  {accuracy=:.3f}")
+    print(f"  {precision=:.3f}")
+    print(f"  {recall=:.3f}")
+    print(f"  {f1=:.3f}")
     labels = [key for key in scores.keys()]
     plt.boxplot(
         [scores_np[label].mean(axis=1) for label in labels],
         labels=labels,
     )
     plt.title("Szerzőség pontszámok (1 = ember, 5 = LLM)")
+    plt.tight_layout()
     plt.savefig("boxplot.png", dpi=600)

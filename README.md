@@ -51,9 +51,11 @@ Az ilyen feladatokban egy-egy konkrét szöveg esetén látszólag csak véletle
 
  8. A Tisza Párt által közzétett programból is gyűjtöttem 25 darab mintát (`tisza-samples.txt`), valamint ezekből is készítettem egy szimulált OCR-hibákat tartalmazó változatot (`tisza-samples-ocr.txt`), és ezekre is elvégeztem a fenti teszteket.
 
- 9. [u/Kukaac javasolt egy promptot](https://www.reddit.com/r/hungary/comments/1qz6o4b/statisztikai_m%C3%B3dszerekkel_elemeztem_a_tisza_p%C3%A1rt/o4enr5i/), amivel szerinte a ChatGPT tud olyan szöveget generálni, ami átveri a tesztet. A kedvéért generáltattam a ChatGPT-vel ezzel a prompttal is 25 mintát (`kukaac-samples.txt`).
+ 9. [u/Kukaac javasolt egy promptot](https://www.reddit.com/r/hungary/comments/1qz6o4b/statisztikai_m%C3%B3dszerekkel_elemeztem_a_tisza_p%C3%A1rt/o4enr5i/), amivel szerinte a ChatGPT tud olyan szöveget generálni, ami átveri a tesztet.  A kedvéért generáltattam a ChatGPT-vel ezzel a prompttal is 25 mintát (`kukaac-samples.txt`), valamint az összehasonlítás kedvéért az ő és az én közelmúltbeli hosszabb kommentjeiből is összeállítottam egy gyűjteményt (`reddithuman-samples.txt`).
 
     > Generálj egy 20 soros rövid essayt az AI hatásáról az oktatásra. Használj vegyesen rövid és hosszú, összetett mondatokat. Használj szubjektív véleményeket. Kerüld a túl steril, tankönyvi megfogalmazást.
+
+    (Ezekkel a regressziós modell egy-egy mintaelemre vonatkozó teljesítménye is mérhetővé válik.)
 
 ### Eredmény
 
@@ -70,6 +72,7 @@ Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)
   tisza-samples.txt:        1.900  (std: 1.261)
   tisza-samples-ocr.txt:    2.300  (std: 1.507)
   kukaac-samples.txt:       3.770  (std: 1.624)
+  reddit-samples.txt:       1.530  (std: 1.135)
 
 ## leakocr
 
@@ -114,8 +117,27 @@ Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)
   LogisticRegression
     kukaac átlagos LLM valószínűség: 74.223%  (std: 0.295)
     kukaac medián LLM valószínűség:  96.017%
+
+## reddithuman
+
+  Mann-Whitney-próba
+    reddithuman vs human: p-value = 0.050131711
+    reddithuman vs llm:   p-value = 0.000000002
+    A reddithuman minta megkülönböztethetetlen a human mintától és különbözik az llm mintától.
+
+  LogisticRegression
+    reddithuman átlagos LLM valószínűség: 3.850%  (std: 0.122)
+    reddithuman medián LLM valószínűség:  0.195%
+
+
+LogisticRegression (human, llm) metrikák:
+
+  accuracy=0.820
+  precision=0.944
+  recall=0.680
+  f1=0.791
 ```
 
 <img src="https://raw.githubusercontent.com/phewandfarbetween/index-tisza-ado-leak-elemzes/kukaac/boxplot.png" alt="Boxplot"/>
 
-Ezek alapján kijelenthető, hogy az állítólagos adótervezet szövegét LLM-ekkel generálták, a Tisza Párt valódi programja pedig emberi munkával készült, u/Kukaac promptja pedig nem tudja kijátszani a tesztet.
+Ezek alapján kijelenthető, hogy az állítólagos adótervezet szövegét LLM-ekkel generálták, a Tisza Párt valódi programja pedig emberi munkával készült, u/Kukaac promptja nem tudja kijátszani a tesztet, valamint ő is és én is valószínűleg emberek vagyunk.
