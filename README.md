@@ -116,6 +116,6 @@ Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)
     kukaac medián LLM valószínűség:  96.017%
 ```
 
-<img src="https://raw.githubusercontent.com/phewandfarbetween/index-tisza-ado-leak-elemzes/main/boxplot.png" alt="Boxplot"/>
+<img src="https://raw.githubusercontent.com/phewandfarbetween/index-tisza-ado-leak-elemzes/kukaac/boxplot.png" alt="Boxplot"/>
 
 Ezek alapján kijelenthető, hogy az állítólagos adótervezet szövegét LLM-ekkel generálták, a Tisza Párt valódi programja pedig emberi munkával készült, u/Kukaac promptja pedig nem tudja kijátszani a tesztet.
