@@ -238,6 +238,7 @@ Következik az elemzendő szövegrészlet:
         "leakocr": "leak-samples-ocr.txt",
         "tisza": "tisza-samples.txt",
         "tiszaocr": "tisza-samples-ocr.txt",
+        "kukaac": "kukaac-samples.txt",
     }
     argv = [arg for arg in sys.argv if arg != "--debug"]
     api_selection = None if len(argv) < 2 else argv[1]
@@ -286,6 +287,7 @@ Következik az elemzendő szövegrészlet:
     eval_scores("leakocr", scores, scores_np, "humanocr", "llmocr")
     eval_scores("tisza", scores, scores_np, "human", "llm")
     eval_scores("tiszaocr", scores, scores_np, "humanocr", "llmocr")
+    eval_scores("kukaac", scores, scores_np, "human", "llm")
     labels = [key for key in scores.keys()]
     plt.boxplot(
         [scores_np[label].mean(axis=1) for label in labels],
