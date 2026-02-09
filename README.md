@@ -51,6 +51,10 @@ Az ilyen feladatokban egy-egy konkrét szöveg esetén látszólag csak véletle
 
  8. A Tisza Párt által közzétett programból is gyűjtöttem 25 darab mintát (`tisza-samples.txt`), valamint ezekből is készítettem egy szimulált OCR-hibákat tartalmazó változatot (`tisza-samples-ocr.txt`), és ezekre is elvégeztem a fenti teszteket.
 
+ 9. [u/Kukaac javasolt egy promptot](https://www.reddit.com/r/hungary/comments/1qz6o4b/statisztikai_m%C3%B3dszerekkel_elemeztem_a_tisza_p%C3%A1rt/o4enr5i/), amivel szerinte a ChatGPT tud olyan szöveget generálni, ami átveri a tesztet. A kedvéért generáltattam a ChatGPT-vel ezzel a prompttal is 25 mintát (`kukaac-samples.txt`).
+
+    > Generálj egy 20 soros rövid essayt az AI hatásáról az oktatásra. Használj vegyesen rövid és hosszú, összetett mondatokat. Használj szubjektív véleményeket. Kerüld a túl steril, tankönyvi megfogalmazást.
+
 ### Eredmény
 
 Éles különbség rajzolódik ki az emberek által írt és az LLM-mel generált szövegek pontszámai között, és az állítólagos adótervezet erősen az utóbbi csoporthoz áll közel, míg a valódi program az előbbiekhez:
@@ -65,6 +69,7 @@ Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)
   leak-samples-ocr.txt:     3.910  (std: 1.408)
   tisza-samples.txt:        1.900  (std: 1.261)
   tisza-samples-ocr.txt:    2.300  (std: 1.507)
+  kukaac-samples.txt:       3.770  (std: 1.624)
 
 ## leakocr
 
@@ -98,8 +103,19 @@ Pontszámok átlaga (1 = biztosan ember, 5 = biztosan LLM)
   LogisticRegression
     tiszaocr átlagos LLM valószínűség: 10.593%  (std: 0.175)
     tiszaocr medián LLM valószínűség:  1.344%
+
+## kukaac
+
+  Mann-Whitney-próba
+    kukaac vs human: p-value = 0.000000030
+    kukaac vs llm:   p-value = 0.157949508
+    A kukaac minta megkülönböztethetetlen az llm mintától és különbözik a human mintától.
+
+  LogisticRegression
+    kukaac átlagos LLM valószínűség: 74.223%  (std: 0.295)
+    kukaac medián LLM valószínűség:  96.017%
 ```
 
 <img src="https://raw.githubusercontent.com/phewandfarbetween/index-tisza-ado-leak-elemzes/main/boxplot.png" alt="Boxplot"/>
 
-Ezek alapján kijelenthető, hogy az állítólagos adótervezet szövegét LLM-ekkel generálták, a Tisza Párt valódi programja pedig emberi munkával készült.
+Ezek alapján kijelenthető, hogy az állítólagos adótervezet szövegét LLM-ekkel generálták, a Tisza Párt valódi programja pedig emberi munkával készült, u/Kukaac promptja pedig nem tudja kijátszani a tesztet.
